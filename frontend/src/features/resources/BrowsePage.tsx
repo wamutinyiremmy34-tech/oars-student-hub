@@ -4,7 +4,9 @@ import { useSearchParams } from "react-router-dom";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { SelectField, TextField } from "@/components/ui/Field";
+import { SkeletonCard } from "@/components/ui/Skeleton";
 import { Pagination } from "@/components/ui/Pagination";
+import { Search, BookOpen } from "@/components/ui/Icon";
 import { listInstitutions } from "@/features/auth/api";
 import { listCategories, searchResources, type SearchQuery } from "@/features/resources/api";
 import { ResourceCard } from "@/features/resources/ResourceCard";
@@ -12,29 +14,36 @@ import { toUserMessage } from "@/lib/api/errors";
 
 const PAGE_SIZE = 12;
 
-/** All filter state lives in the URL, so results are shareable, bookmarkable and survive the back button. */
 export function BrowsePage() {
   const [params, setParams] = useSearchParams();
   const [draft, setDraft] = useState(params.get("q") ?? "");
 
   const query: SearchQuery = {
-    q: params.get("q") ?? undefined,
+    q:              params.get("q") ?? undefined,
     institution_id: params.get("institution_id") ?? undefined,
-    category: params.get("category") ?? undefined,
-    course_id: params.get("course_id") ?? undefined,
-    access: (params.get("access") as SearchQuery["access"]) ?? undefined,
-    sort: (params.get("sort") as SearchQuery["sort"]) ?? undefined,
-    page: params.get("page") ? Number(params.get("page")) : undefined,
-    page_size: PAGE_SIZE,
+    category:       params.get("category") ?? undefined,
+    course_id:      params.get("course_id") ?? undefined,
+    access:         (params.get("access") as SearchQuery["access"]) ?? undefined,
+    sort:           (params.get("sort") as SearchQuery["sort"]) ?? undefined,
+    page:           params.get("page") ? Number(params.get("page")) : undefined,
+    page_size:      PAGE_SIZE,
   };
 
-  const results = useQuery({
+  const results      = useQuery({
     queryKey: ["resources", "search", query],
-    queryFn: ({ signal }) => searchResources(query, signal),
-    placeholderData: keepPreviousData,
+    queryFn:  ({ signal }) => searchResources(query, signal),
+    placeholderData:  keepPreviousData,
   });
-  const institutions = useQuery({ queryKey: ["institutions"], queryFn: ({ signal }) => listInstitutions(signal), staleTime: 300_000 });
-  const categories = useQuery({ queryKey: ["categories"], queryFn: ({ signal }) => listCategories(signal), staleTime: 300_000 });
+  const institutions = useQuery({
+    queryKey: ["institutions"],
+    queryFn:  ({ signal }) => listInstitutions(signal),
+    staleTime: 300_000,
+  });
+  const categories   = useQuery({
+    queryKey: ["categories"],
+    queryFn:  ({ signal }) => listCategories(signal),
+    staleTime: 300_000,
+  });
 
   function update(changes: Record<string, string | null>) {
     const next = new URLSearchParams(params);
@@ -42,7 +51,7 @@ export function BrowsePage() {
       if (value) next.set(key, value);
       else next.delete(key);
     }
-    if (!("page" in changes)) next.delete("page"); // any filter change returns to the first page
+    if (!("page" in changes)) next.delete("page");
     setParams(next);
   }
 
@@ -51,83 +60,165 @@ export function BrowsePage() {
     update({ q: draft.trim() || null });
   }
 
-  const total = results.data?.meta.total ?? 0;
+  const total     = results.data?.meta.total ?? 0;
+  const hasFilter = !!(query.q || query.institution_id || query.category || query.course_id || query.access);
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-extrabold">Find resources</h1>
+      <div>
+        <h1 className="text-2xl font-extrabold">Find resources</h1>
+        <p className="mt-1 text-sm text-fg-muted">
+          Lecture notes, past papers, textbooks and more from Ugandan universities.
+        </p>
+      </div>
 
+      {/* Search bar */}
       <form onSubmit={onSearch} role="search" className="flex items-end gap-2">
         <div className="flex-1">
-          <TextField label="Search notes, past papers and course codes" type="search" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="e.g. calculus or CSC1201" />
+          <TextField
+            label="Search notes, past papers and course codes"
+            type="search"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="e.g. calculus or CSC1201"
+          />
         </div>
-        <Button type="submit" size="lg">
-          Search
+        <Button type="submit" size="lg" className="shrink-0 self-end min-h-12">
+          <Search size="sm" aria-hidden />
+          <span className="hidden sm:inline">Search</span>
         </Button>
       </form>
 
+      {/* Filters */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <SelectField label="University" value={query.institution_id ?? ""} onChange={(e) => update({ institution_id: e.target.value || null })}>
+        <SelectField
+          label="University"
+          value={query.institution_id ?? ""}
+          onChange={(e) => update({ institution_id: e.target.value || null })}
+        >
           <option value="">All universities</option>
           {institutions.data?.map((i) => (
-            <option key={i.id} value={i.id}>
-              {i.name}
-            </option>
+            <option key={i.id} value={i.id}>{i.name}</option>
           ))}
         </SelectField>
-        <SelectField label="Type" value={query.category ?? ""} onChange={(e) => update({ category: e.target.value || null })}>
+
+        <SelectField
+          label="Type"
+          value={query.category ?? ""}
+          onChange={(e) => update({ category: e.target.value || null })}
+        >
           <option value="">All types</option>
           {categories.data?.map((c) => (
-            <option key={c.id} value={c.slug}>
-              {c.name}
-            </option>
+            <option key={c.id} value={c.slug}>{c.name}</option>
           ))}
         </SelectField>
-        <SelectField label="Price" value={query.access ?? ""} onChange={(e) => update({ access: e.target.value || null })}>
+
+        <SelectField
+          label="Price"
+          value={query.access ?? ""}
+          onChange={(e) => update({ access: e.target.value || null })}
+        >
           <option value="">Free and premium</option>
           <option value="FREE">Free only</option>
           <option value="PREMIUM">Premium only</option>
         </SelectField>
-        <SelectField label="Sort by" value={query.sort ?? ""} onChange={(e) => update({ sort: e.target.value || null })}>
+
+        <SelectField
+          label="Sort by"
+          value={query.sort ?? ""}
+          onChange={(e) => update({ sort: e.target.value || null })}
+        >
           <option value="">{query.q ? "Best match" : "Newest"}</option>
           <option value="newest">Newest</option>
-          <option value="title">Title A-Z</option>
+          <option value="title">Title A–Z</option>
         </SelectField>
       </div>
 
+      {/* Active course filter */}
       {query.course_id && (
         <Alert variant="info">
           Showing resources for one course.{" "}
-          <button type="button" className="underline" onClick={() => update({ course_id: null })}>
+          <button
+            type="button"
+            className="font-semibold underline"
+            onClick={() => update({ course_id: null })}
+          >
             Clear
           </button>
         </Alert>
       )}
-
+      {/* Results */}
       {results.isPending && (
-        <p role="status" className="text-fg-muted">
-          Loading resources…
-        </p>
+        <div className="grid gap-4 md:grid-cols-2" aria-busy="true" aria-label="Loading resources">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
       )}
+
       {results.isError && (
         <div className="space-y-3">
           <Alert variant="error">{toUserMessage(results.error)}</Alert>
           <Button onClick={() => void results.refetch()}>Try again</Button>
         </div>
       )}
+
       {results.data && (
-        <section aria-busy={results.isFetching} className="space-y-4">
+        <section aria-busy={results.isFetching} className="space-y-5">
+          {/* Result count */}
           <p className="text-sm text-fg-muted" role="status">
-            {total === 0 ? "No resources found." : `${total} resource${total === 1 ? "" : "s"} found`}
-          </p>
-          <ul className="grid gap-4 md:grid-cols-2">
-            {results.data.items.map((resource) => (
-              <li key={resource.id}>
-                <ResourceCard resource={resource} />
-              </li>
-            ))}
-          </ul>
-          <Pagination page={query.page ?? 1} pageSize={PAGE_SIZE} total={total} onChange={(page) => update({ page: String(page) })} />
+            {total === 0
+              ? hasFilter
+                ? "No resources match your filters."
+                : "No resources available yet."
+              : `${total.toLocaleString()} resource${total === 1 ? "" : "s"} found`}          </p>
+
+          {/* Grid */}
+          {results.data.items.length > 0 && (
+            <>
+              <ul className="grid gap-4 md:grid-cols-2" aria-label="Resource results">
+                {results.data.items.map((resource) => (
+                  <li key={resource.id}>
+                    <ResourceCard resource={resource} />
+                  </li>
+                ))}
+              </ul>
+              <Pagination
+                page={query.page ?? 1}
+                pageSize={PAGE_SIZE}
+                total={total}
+                onChange={(page) => update({ page: String(page) })}
+              />
+            </>
+          )}
+
+          {/* Empty state with illustration */}
+          {results.data.items.length === 0 && (
+            <div className="flex flex-col items-center gap-4 py-16 text-center">
+              <div className="rounded-full bg-surface p-6">
+                <BookOpen size="xl" className="text-fg-muted" aria-hidden />
+              </div>
+              <div className="space-y-1">
+                <p className="font-semibold text-fg">No resources found.</p>
+                <p className="text-sm text-fg-muted max-w-sm">
+                  {hasFilter
+                    ? "Try adjusting your filters or search term."
+                    : "Check back later — resources are added regularly."}
+                </p>
+              </div>
+              {hasFilter && (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setDraft("");
+                    setParams(new URLSearchParams());
+                  }}
+                >
+                  Clear all filters
+                </Button>
+              )}
+            </div>
+          )}
         </section>
       )}
     </div>

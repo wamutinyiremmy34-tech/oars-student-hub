@@ -2,7 +2,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { CATEGORIES, detail, INSTITUTIONS, summary } from "@/test/fixtures";
-import { apiError, mockApi, ok, okPage, signedInWith, signedOutApi } from "@/test/mock-api";
+import { apiError, mockApi, ok, okPage, signedInAsProvider, signedInWith, signedOutApi } from "@/test/mock-api";
 import { renderApp } from "@/test/render";
 
 const refs = () => ({ "GET /institutions": () => ok(INSTITUTIONS), "GET /categories": () => ok(CATEGORIES) });
@@ -150,13 +150,15 @@ describe("moderation page and navigation", () => {
     await waitFor(() => expect(api.callsTo("GET /resources/review-queue").at(-1)?.search.get("status")).toBe("SUBMITTED"));
   });
 
-  it("shows navigation links according to permissions", async () => {
-    mockApi(signedInWith(["resource:create", "resource:review"]));
+  it("shows navigation links according to role", async () => {
+    // A RESOURCE_PROVIDER sees My resources and Moderation in the nav
+    mockApi(signedInAsProvider());
     const first = renderApp("/");
     expect(await screen.findByRole("link", { name: "My resources" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Moderation" })).toBeInTheDocument();
     first.unmount();
 
+    // A STUDENT does not see My resources or Moderation in the nav
     mockApi(signedInWith(["order:create"]));
     renderApp("/");
     expect(await screen.findByRole("link", { name: "Saved" })).toBeInTheDocument();

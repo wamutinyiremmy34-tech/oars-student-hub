@@ -79,6 +79,16 @@ class Settings(BaseSettings):
     # HTTP (comma-separated in the environment)
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
 
+    # Email / SMTP  (optional — omit to fall back to console logging in dev)
+    smtp_host: str | None = None
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    smtp_username: str | None = None
+    smtp_password: SecretStr | None = None
+    smtp_use_tls: bool = True          # STARTTLS on port 587; set False for port 465 SSL
+    smtp_use_ssl: bool = False         # True for port 465 (SSL from the start)
+    smtp_from_address: str = "no-reply@oars.local"
+    smtp_from_name: str = "OARS Student Solutions"
+
     # Logging
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     log_format: Literal["json", "console"] = "json"

@@ -20,6 +20,7 @@ from app.modules.advertising.schemas import (
     AdvertiserOut,
     CampaignIn,
     CampaignOut,
+    CampaignPatch,
     PlatformAnalyticsOut,
 )
 from app.modules.auth.deps import OptionalPrincipal, require_permission
@@ -148,6 +149,28 @@ def create_campaign(
         name=body.name,
         starts_at=body.starts_at,
         ends_at=body.ends_at,
+    )
+    return ok(CampaignOut.model_validate(c))
+
+
+@ads_router.patch(
+    "/campaigns/{campaign_id}",
+    response_model=Envelope[CampaignOut],
+    summary="Update campaign",
+)
+def update_campaign(
+    campaign_id: uuid.UUID,
+    body: CampaignPatch,
+    db: DbSession,
+    _principal: _RequireManage,
+) -> Envelope[CampaignOut]:
+    c = service.update_campaign(
+        db,
+        campaign_id=campaign_id,
+        name=body.name,
+        starts_at=body.starts_at,
+        ends_at=body.ends_at,
+        is_active=body.is_active,
     )
     return ok(CampaignOut.model_validate(c))
 

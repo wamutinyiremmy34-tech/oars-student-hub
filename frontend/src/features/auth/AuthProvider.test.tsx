@@ -8,7 +8,7 @@ import { renderApp } from "@/test/render";
 
 describe("AuthProvider", () => {
   it("restores a session from the refresh cookie and loads the current user", async () => {
-    const api = mockApi(signedInApi());
+    const api = mockApi({ ...signedInApi(), "GET /account": () => ok({}) });
     renderApp("/account");
 
     expect(await screen.findByRole("heading", { name: "Your account" })).toBeInTheDocument();

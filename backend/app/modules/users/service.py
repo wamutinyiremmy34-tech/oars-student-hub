@@ -61,6 +61,33 @@ def get_user_for_admin(db: Session, principal: Principal, user_id: uuid.UUID) ->
     return _admin_view(db, authorize_over_user(db, principal, user_id, "user:read"))
 
 
+def update_me(
+    db: Session, *, principal: Principal, full_name: str | None, phone: str | None, meta: RequestMeta
+) -> MeOut:
+    """Let a user update their own display name and phone number."""
+    user = principal.user
+    changed: list[str] = []
+    if full_name is not None:
+        user.full_name = full_name.strip()
+        changed.append("full_name")
+    if phone is not None:
+        # Empty string clears the phone number
+        user.phone = phone.strip() or None
+        changed.append("phone")
+    if changed:
+        audit.record(
+            db,
+            action="user.profile_updated",
+            actor_user_id=user.id,
+            target_type="user",
+            target_id=str(user.id),
+            details={"changed": changed},
+            meta=meta,
+        )
+        db.commit()
+    return build_me(db, principal)
+
+
 def suspend_user(
     db: Session, *, principal: Principal, user_id: uuid.UUID, reason: str, meta: RequestMeta
 ) -> UserAdminOut:

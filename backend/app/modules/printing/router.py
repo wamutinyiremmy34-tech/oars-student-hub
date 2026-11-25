@@ -59,7 +59,15 @@ def _rule_out(r) -> schemas.RuleOut:  # type: ignore[no-untyped-def]
 
 # ------------------------------------------------------------------ shops (public reads, admin writes)
 @shops_router.get("", response_model=Envelope[list[schemas.ShopOut]])
-def list_shops(db: DbSession, institution_id: uuid.UUID) -> Envelope[list[schemas.ShopOut]]:
+def list_shops(
+    db: DbSession,
+    institution_id: uuid.UUID,
+    include_inactive: bool = False,
+    principal: ShopAdmin | None = None,
+) -> Envelope[list[schemas.ShopOut]]:
+    # Admins can request all shops; everyone else gets only active ones
+    if include_inactive and principal is not None:
+        return ok([_shop_out(s) for s in shops.list_shops_all(db, institution_id)])
     return ok([_shop_out(s) for s in shops.list_shops(db, institution_id)])
 
 

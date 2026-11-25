@@ -59,6 +59,30 @@ def list_campaigns(db: Session, *, advertiser_id: uuid.UUID | None = None) -> li
     return list(db.scalars(q))
 
 
+def update_campaign(
+    db: Session,
+    *,
+    campaign_id: uuid.UUID,
+    name: str | None = None,
+    starts_at: datetime | None = None,
+    ends_at: datetime | None = None,
+    is_active: bool | None = None,
+) -> Campaign:
+    c = db.get(Campaign, campaign_id)
+    if c is None:
+        raise NotFoundError("Campaign not found.")
+    if name is not None:
+        c.name = name
+    if starts_at is not None:
+        c.starts_at = starts_at
+    if ends_at is not None:
+        c.ends_at = ends_at
+    if is_active is not None:
+        c.is_active = is_active
+    db.commit()
+    return c
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Advertisement lifecycle
 # ─────────────────────────────────────────────────────────────────────────────

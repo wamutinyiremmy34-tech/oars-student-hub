@@ -28,8 +28,8 @@ export function RequirePermission({
   permission: string;
   children: ReactNode;
 }) {
-  const { can } = useAuth();
-  if (!can(permission)) {
+  const { canAny } = useAuth();
+  if (!canAny(permission)) {
     return (
       <Card>
         <h1 className="text-2xl font-extrabold">Access denied</h1>

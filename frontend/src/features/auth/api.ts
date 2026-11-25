@@ -87,3 +87,27 @@ export function listInstitutions(signal?: AbortSignal) {
     signal,
   });
 }
+
+export function updateProfile(body: { full_name?: string; phone?: string }) {
+  return apiFetch("/me", { method: "PATCH", body, schema: meSchema });
+}
+
+export function forgotPassword(email: string) {
+  return apiFetch("/auth/forgot-password", {
+    method: "POST",
+    body: { email },
+    schema: messageSchema,
+    auth: false,
+    skipAuthRefresh: true,
+  });
+}
+
+export function resetPassword(token: string, password: string) {
+  return apiFetch("/auth/reset-password", {
+    method: "POST",
+    body: { token, new_password: password },
+    schema: messageSchema,
+    auth: false,
+    skipAuthRefresh: true,
+  });
+}

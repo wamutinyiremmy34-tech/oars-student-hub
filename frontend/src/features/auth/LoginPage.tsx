@@ -7,8 +7,10 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TextField } from "@/components/ui/Field";
+import { PasswordField } from "@/components/ui/Field";
 import { useAuth } from "@/features/auth/auth-context";
 import { safeRedirect } from "@/features/auth/forms";
+import { useRole, roleDashboardPath } from "@/features/auth/use-role";
 import { toUserMessage } from "@/lib/api/errors";
 
 const loginSchema = z.object({
@@ -19,6 +21,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
   const { state, signIn } = useAuth();
+  const role = useRole();
   const location = useLocation();
   const [formError, setFormError] = useState<string | null>(null);
   const {
@@ -27,7 +30,15 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
 
-  const destination = safeRedirect((location.state as { from?: string } | null)?.from);
+  const locationState = location.state as { from?: string; flash?: string } | null;
+  const flash = locationState?.flash;
+
+  // If the user was trying to visit a specific page before being redirected to login,
+  // honour that destination. Otherwise, send them to their role-appropriate dashboard.
+  const destination = locationState?.from
+    ? safeRedirect(locationState.from)
+    : roleDashboardPath(role);
+
   if (state.status === "authenticated") return <Navigate to={destination} replace />;
 
   const onSubmit = handleSubmit(async ({ email, password }) => {
@@ -42,6 +53,7 @@ export function LoginPage() {
   return (
     <Card className="mx-auto max-w-md space-y-6">
       <h1 className="text-2xl font-extrabold">Sign in</h1>
+      {flash && <Alert variant="success">{flash}</Alert>}
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         <TextField
           label="Email"
@@ -50,13 +62,19 @@ export function LoginPage() {
           error={errors.email?.message}
           {...register("email")}
         />
-        <TextField
-          label="Password"
-          type="password"
-          autoComplete="current-password"
-          error={errors.password?.message}
-          {...register("password")}
-        />
+        <div className="space-y-1">
+          <PasswordField
+            label="Password"
+            autoComplete="current-password"
+            error={errors.password?.message}
+            {...register("password")}
+          />
+          <div className="text-right">
+            <Link to="/forgot-password" className="text-xs text-secondary hover:underline">
+              Forgot password?
+            </Link>
+          </div>
+        </div>
         {formError && <Alert variant="error">{formError}</Alert>}
         <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? "Signing in…" : "Sign in"}

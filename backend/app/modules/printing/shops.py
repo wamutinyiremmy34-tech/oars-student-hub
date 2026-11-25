@@ -25,6 +25,12 @@ def list_shops(db: Session, institution_id: uuid.UUID) -> list[PrintShop]:
     return list(db.scalars(stmt.order_by(PrintShop.name)))
 
 
+def list_shops_all(db: Session, institution_id: uuid.UUID) -> list[PrintShop]:
+    """Return all shops for an institution regardless of is_active (admin use)."""
+    stmt = select(PrintShop).where(PrintShop.institution_id == institution_id)
+    return list(db.scalars(stmt.order_by(PrintShop.name)))
+
+
 def get_shop(db: Session, shop_id: uuid.UUID) -> PrintShop:
     shop = db.get(PrintShop, shop_id)
     if shop is None:

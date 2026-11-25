@@ -15,6 +15,7 @@ from app.modules.users import service
 from app.modules.users.schemas import (
     GrantRoleIn,
     MeOut,
+    ProfilePatch,
     RoleAssignmentOut,
     SuspendIn,
     UserAdminOut,
@@ -30,6 +31,14 @@ RoleName = Annotated[str, StringConstraints(pattern=r"^[A-Z_]{3,50}$")]
 def get_me(principal: CurrentPrincipal, db: DbSession) -> Envelope[MeOut]:
     # Object-level security by construction: there is no id parameter to tamper with.
     return ok(service.build_me(db, principal))
+
+
+@me_router.patch("/me", response_model=Envelope[MeOut], summary="Update own profile")
+def update_me(
+    body: ProfilePatch, principal: CurrentPrincipal, db: DbSession, meta: RequestMetaDep
+) -> Envelope[MeOut]:
+    # Only allows full_name and phone. Role, email, and password are protected elsewhere.
+    return ok(service.update_me(db, principal=principal, full_name=body.full_name, phone=body.phone, meta=meta))
 
 
 @users_router.get("/{user_id}", response_model=Envelope[UserAdminOut])

@@ -74,6 +74,16 @@ class UserAdminOut(BaseModel):
     roles: list[RoleAssignmentOut]
 
 
+class ProfilePatch(BaseModel):
+    """Fields a user may update on their own profile.  Email and role cannot be changed here."""
+
+    full_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)] | None = None
+    phone: Annotated[str, StringConstraints(strip_whitespace=True, max_length=20)] | None = Field(
+        default=None,
+        description="Phone number. Send an empty string to clear.",
+    )
+
+
 class SuspendIn(BaseModel):
     reason: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=255)]
 

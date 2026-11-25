@@ -12,7 +12,8 @@ import { tokenStore, __resetInflightForTest } from "@/features/auth/session";
 const OriginalRequest = globalThis.Request;
 class PatchedRequest extends OriginalRequest {
   constructor(input: RequestInfo | URL, init?: RequestInit) {
-    const { signal: _signal, ...rest } = init ?? {};
+    const { signal: _omit, ...rest } = init ?? {};
+    void _omit;
     super(input, rest as RequestInit);
   }
 }

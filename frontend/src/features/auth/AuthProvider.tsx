@@ -68,11 +68,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [queryClient]);
 
+  const refreshMe = useCallback(async () => {
+    try {
+      const me = await getMe();
+      setState({ status: "authenticated", me });
+    } catch {
+      // If refresh fails, leave the state as-is — the user stays signed in.
+    }
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       state,
       signIn,
       signOut,
+      refreshMe,
       can: (permission, institutionId) =>
         state.status === "authenticated" &&
         state.me.permissions.some(
@@ -81,8 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             (grant.institution_id === null ||
               (institutionId != null && grant.institution_id === institutionId)),
         ),
+      canAny: (permission) =>
+        state.status === "authenticated" &&
+        state.me.permissions.some((grant) => grant.permission === permission),
     }),
-    [state, signIn, signOut],
+    [state, signIn, signOut, refreshMe],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

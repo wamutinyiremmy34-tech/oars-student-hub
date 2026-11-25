@@ -58,6 +58,13 @@ class CampaignIn(BaseModel):
     ends_at: datetime | None = None
 
 
+class CampaignPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=200)
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    is_active: bool | None = None
+
+
 class AdOut(BaseModel):
     id: uuid.UUID
     campaign_id: uuid.UUID

@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Alert } from "@/components/ui/Alert";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { SelectField, TextField } from "@/components/ui/Field";
+import { SelectField, TextField, PasswordField } from "@/components/ui/Field";
 import { listInstitutions, registerStudent } from "@/features/auth/api";
 import { applyServerFieldErrors } from "@/features/auth/forms";
 import { ApiError, toUserMessage } from "@/lib/api/errors";
@@ -141,17 +141,15 @@ export function RegisterPage() {
           error={errors.phone?.message}
           {...register("phone")}
         />
-        <TextField
+        <PasswordField
           label="Password"
-          type="password"
           autoComplete="new-password"
           hint="At least 10 characters."
           error={errors.password?.message}
           {...register("password")}
         />
-        <TextField
+        <PasswordField
           label="Repeat password"
-          type="password"
           autoComplete="new-password"
           error={errors.confirm_password?.message}
           {...register("confirm_password")}

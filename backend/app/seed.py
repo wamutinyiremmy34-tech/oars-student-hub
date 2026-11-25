@@ -30,10 +30,10 @@ from app.providers.storage.base import StorageBackend
 
 DEMO_PASSWORD = "Demo-password-123"
 DEMO_EMAILS = {
-    "student": "student@demo.oars.test",
-    "provider": "provider@demo.oars.test",
-    "admin": "admin@demo.oars.test",  # ADMIN scoped to Makerere
-    "operator": "operator@demo.oars.test",  # works at the demo print shop
+    "student": "student@demo.oars.dev",
+    "provider": "provider@demo.oars.dev",
+    "admin": "admin@demo.oars.dev",  # ADMIN scoped to Makerere
+    "operator": "operator@demo.oars.dev",  # works at the demo print shop
 }
 TINY_PDF = b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n"
 

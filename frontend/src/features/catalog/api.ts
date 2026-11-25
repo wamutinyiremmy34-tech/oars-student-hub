@@ -2,9 +2,9 @@ import { z } from "zod";
 import { apiFetch, apiFetchPage } from "@/lib/api/client";
 import { toQueryString } from "@/features/resources/api";
 
-const faculty = z.object({ id: z.string(), institution_id: z.string(), name: z.string(), kind: z.string(), code: z.string().nullable() });
-const program = z.object({ id: z.string(), institution_id: z.string(), faculty_id: z.string(), name: z.string(), level: z.string(), code: z.string().nullable() });
-const course = z.object({ id: z.string(), institution_id: z.string(), faculty_id: z.string(), code: z.string(), title: z.string() });
+const faculty = z.object({ id: z.string(), institution_id: z.string(), name: z.string(), kind: z.string(), code: z.string().nullable(), is_active: z.boolean().default(true) });
+const program = z.object({ id: z.string(), institution_id: z.string(), faculty_id: z.string(), name: z.string(), level: z.string(), code: z.string().nullable(), duration_years: z.number().nullable().default(null), department_id: z.string().nullable().default(null), is_active: z.boolean().default(true) });
+const course = z.object({ id: z.string(), institution_id: z.string(), faculty_id: z.string(), department_id: z.string().nullable().default(null), code: z.string(), title: z.string(), credit_units: z.number().nullable().default(null), is_active: z.boolean().default(true) });
 export type Faculty = z.infer<typeof faculty>;
 export type Program = z.infer<typeof program>;
 export type Course = z.infer<typeof course>;

@@ -34,7 +34,9 @@ function withAuth(permissions: string[], ui: ReactElement) {
     state: { status: "authenticated", me: { ...ME, permissions: permissions.map((permission) => ({ permission, institution_id: null })) } },
     signIn: async () => undefined,
     signOut: async () => undefined,
+    refreshMe: async () => undefined,
     can: (permission) => permissions.includes(permission),
+    canAny: (permission) => permissions.includes(permission),
   };
   const router = createMemoryRouter([{ path: "/", element: ui }]);
   return render(

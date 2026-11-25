@@ -23,7 +23,10 @@ const routes = (online = true) => ({
 const pdf = () => new File(["%PDF-1.4"], "notes.pdf", { type: "application/pdf" });
 
 async function addDocument(user = userEvent.setup()) {
-  await user.selectOptions(await screen.findByLabelText("Print shop"), "s-1");
+  const shopSelect = await screen.findByLabelText("Print shop");
+  // Wait for shops to load. The option includes the shop's location in parentheses.
+  await screen.findByText(new RegExp(SHOP.name, "i"), { selector: "option" });
+  await user.selectOptions(shopSelect, "s-1");
   await user.upload(await screen.findByLabelText(/upload a pdf or image/i), pdf());
   await screen.findByText(/notes\.pdf · 3 pages/);
   return user;
@@ -130,7 +133,9 @@ describe("NewPrintOrderPage", () => {
     const api = mockApi({ ...routes(), "POST /print/documents": () => apiError(415, "unreadable_pdf", "This PDF could not be read.") });
     renderApp("/print");
     const user = userEvent.setup();
-    await user.selectOptions(await screen.findByLabelText("Print shop"), "s-1");
+    const shopSelect = await screen.findByLabelText("Print shop");
+    await screen.findByText(new RegExp(SHOP.name, "i"), { selector: "option" });
+    await user.selectOptions(shopSelect, "s-1");
     const input = await screen.findByLabelText(/upload a pdf or image/i);
 
     const huge = new File(["x"], "huge.pdf", { type: "application/pdf" });

@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+import type { Me } from "@/features/auth/api";
 
 export interface MockRequest {
   method: string;
@@ -65,7 +66,7 @@ export const TOKEN = {
   expires_in: 900,
 };
 
-export const ME = {
+export const ME: Me = {
   user: {
     id: "u-1",
     email: "amina@example.com",
@@ -83,6 +84,53 @@ export const ME = {
   ],
 };
 
+export const ME_PROVIDER: Me = {
+  ...ME,
+  user: { ...ME.user, id: "u-2", email: "provider@demo.oars.dev", full_name: "Demo Provider" },
+  student_profile: null,
+  roles: [{ role: "RESOURCE_PROVIDER", institution_id: "i-1" }],
+  permissions: [
+    { permission: "resource:create", institution_id: "i-1" },
+    { permission: "notification:read", institution_id: "i-1" },
+  ],
+};
+
+export const ME_OPERATOR: Me = {
+  ...ME,
+  user: { ...ME.user, id: "u-3", email: "operator@demo.oars.dev", full_name: "Demo Operator" },
+  student_profile: null,
+  roles: [{ role: "PRINTING_OPERATOR", institution_id: "i-1" }],
+  permissions: [
+    { permission: "order:read_any", institution_id: "i-1" },
+    { permission: "notification:read", institution_id: "i-1" },
+  ],
+};
+
+export const ME_ADMIN: Me = {
+  ...ME,
+  user: { ...ME.user, id: "u-4", email: "admin@demo.oars.dev", full_name: "Demo Admin" },
+  student_profile: null,
+  roles: [{ role: "ADMIN", institution_id: null }],
+  permissions: [
+    { permission: "user:read", institution_id: null },
+    { permission: "user:suspend", institution_id: null },
+    { permission: "role:assign", institution_id: null },
+    { permission: "resource:review", institution_id: null },
+    { permission: "advertisement:manage", institution_id: null },
+    { permission: "analytics:read", institution_id: null },
+    { permission: "notification:read", institution_id: null },
+  ],
+};
+
+/** A minimal dashboard API response for the /dashboard endpoint. */
+export const DASHBOARD = {
+  greeting: "Good morning!",
+  unread_notifications: 0,
+  recent_resources: [],
+  recent_orders: [],
+  bookmarked_count: 0,
+};
+
 /** The common starting point: a visitor with no session. */
 export const signedOutApi = (): Record<string, MockHandler> => ({
   "POST /auth/refresh": () => apiError(401, "invalid_refresh_token"),
@@ -93,6 +141,31 @@ export const signedInApi = (): Record<string, MockHandler> => ({
   "POST /auth/refresh": () => ok(TOKEN),
   "GET /me": () => ok(ME),
   "POST /auth/logout": () => ok({ message: "Signed out." }),
+  "GET /notifications/unread-count": () => ok({ count: 0 }),
+});
+
+/** Signed-in as a resource provider. */
+export const signedInAsProvider = (): Record<string, MockHandler> => ({
+  "POST /auth/refresh": () => ok(TOKEN),
+  "GET /me": () => ok(ME_PROVIDER),
+  "POST /auth/logout": () => ok({ message: "Signed out." }),
+  "GET /notifications/unread-count": () => ok({ count: 0 }),
+});
+
+/** Signed-in as a printing operator. */
+export const signedInAsOperator = (): Record<string, MockHandler> => ({
+  "POST /auth/refresh": () => ok(TOKEN),
+  "GET /me": () => ok(ME_OPERATOR),
+  "POST /auth/logout": () => ok({ message: "Signed out." }),
+  "GET /notifications/unread-count": () => ok({ count: 0 }),
+});
+
+/** Signed-in as an admin. */
+export const signedInAsAdmin = (): Record<string, MockHandler> => ({
+  "POST /auth/refresh": () => ok(TOKEN),
+  "GET /me": () => ok(ME_ADMIN),
+  "POST /auth/logout": () => ok({ message: "Signed out." }),
+  "GET /notifications/unread-count": () => ok({ count: 0 }),
 });
 
 export function okPage(items: unknown[], meta: { page?: number; page_size?: number; total?: number } = {}): Response {

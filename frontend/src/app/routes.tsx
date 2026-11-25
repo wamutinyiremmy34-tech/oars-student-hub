@@ -4,11 +4,17 @@ import { NotFoundPage } from "@/app/NotFoundPage";
 import { RouteErrorPage } from "@/app/RouteErrorPage";
 import { AdminPage } from "@/features/admin/AdminPage";
 import { AccountPage } from "@/features/auth/AccountPage";
+import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { RequireAuth, RequirePermission } from "@/features/auth/RequireAuth";
+import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage";
+import { VerifyEmailPage } from "@/features/auth/VerifyEmailPage";
 import { CatalogPage } from "@/features/catalog/CatalogPage";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
+import { ProviderDashboardPage } from "@/features/dashboard/ProviderDashboardPage";
+import { OperatorDashboardPage } from "@/features/dashboard/OperatorDashboardPage";
+import { HelpPage } from "@/features/help/HelpPage";
 import { HomePage } from "@/features/home/HomePage";
 import { NotificationsPage } from "@/features/notifications/NotificationsPage";
 import { OperatorOrderPage } from "@/features/operator/OperatorOrderPage";
@@ -34,6 +40,9 @@ export const routes: RouteObject[] = [
       { index: true, element: <HomePage /> },
       { path: "login", element: <LoginPage /> },
       { path: "register", element: <RegisterPage /> },
+      { path: "forgot-password", element: <ForgotPasswordPage /> },
+      { path: "reset-password", element: <ResetPasswordPage /> },
+      { path: "verify-email", element: <VerifyEmailPage /> },
       {
         path: "status",
         lazy: async () => {
@@ -48,12 +57,21 @@ export const routes: RouteObject[] = [
       {
         element: <RequireAuth />,
         children: [
-          { path: "dashboard", element: <DashboardPage /> },
+          // ── Shared / account ─────────────────────────────────────────────
           { path: "account", element: <AccountPage /> },
           { path: "bookmarks", element: <BookmarksPage /> },
           { path: "notifications", element: <NotificationsPage /> },
+          { path: "help", element: <HelpPage /> },
           { path: "pay/fake/:id", element: <FakeCheckoutPage /> },
           { path: "payments/:id", element: <PaymentReturnPage /> },
+
+          // ── Student dashboard ─────────────────────────────────────────────
+          // /dashboard dispatches to the right role-specific dashboard.
+          // For STUDENT users it renders StudentDashboard directly.
+          // For other roles it redirects to their own workspace root.
+          { path: "dashboard", element: <DashboardPage /> },
+
+          // ── Student: printing ─────────────────────────────────────────────
           {
             path: "print",
             element: (
@@ -78,6 +96,16 @@ export const routes: RouteObject[] = [
               </RequirePermission>
             ),
           },
+
+          // ── Printing Operator workspace ───────────────────────────────────
+          {
+            path: "operator/dashboard",
+            element: (
+              <RequirePermission permission="order:read_any">
+                <OperatorDashboardPage />
+              </RequirePermission>
+            ),
+          },
           {
             path: "operator",
             element: (
@@ -91,6 +119,16 @@ export const routes: RouteObject[] = [
             element: (
               <RequirePermission permission="order:read_any">
                 <OperatorOrderPage />
+              </RequirePermission>
+            ),
+          },
+
+          // ── Resource Provider workspace ───────────────────────────────────
+          {
+            path: "provider/dashboard",
+            element: (
+              <RequirePermission permission="resource:create">
+                <ProviderDashboardPage />
               </RequirePermission>
             ),
           },
@@ -118,6 +156,8 @@ export const routes: RouteObject[] = [
               </RequirePermission>
             ),
           },
+
+          // ── Moderation (shared between Admin and Resource Provider reviewer)
           {
             path: "moderation",
             element: (
@@ -126,6 +166,8 @@ export const routes: RouteObject[] = [
               </RequirePermission>
             ),
           },
+
+          // ── Admin workspace ───────────────────────────────────────────────
           {
             path: "admin",
             element: (
